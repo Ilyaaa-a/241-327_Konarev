@@ -1,0 +1,52 @@
+@hostname = http://localhost:8000
+
+### запрос на Retrieve C(R)UD
+GET {{hostname}}/cameras
+
+###
+
+### запрос на Retrieve C(R)UD
+GET {{hostname}}/cameras/12
+Content-Type: application/json
+
+### запрос на Create (C)RUD
+POST {{hostname}}/cameras
+Content-Type: application/json
+
+{
+  "brand": "Leica",
+  "release_year": 2026,
+  "megapixels": "50.2",
+  "sensor_type": "Full_Frame",
+  "interchangeable_lens": true,
+  "price": 900000
+}
+
+#TODO запросы DELETE и PATCH
+
+### запрос на Delete CRU(D)
+DELETE {{hostname}}/cameras/4
+
+
+### запрос на Update CR(U)D
+
+UPDATE {{hostname}}/cameras/4
+Content-Type: application/json
+
+{
+  "brand": "Nikon",
+  "release_year": 2020,
+  "megapixels": "20.4",
+  "sensor_type": "Full_Frame",
+  "interchangeable_lens": true,
+  "price": 900000
+}
+
+###
+
+PATCH {{hostname}}/cameras/23
+Content-Type: application/json
+
+{
+  "price": 120000
+}
