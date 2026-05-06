@@ -1,16 +1,17 @@
-@hostname = http://localhost:8000
+# @hostname = https://localhost:443
+@hostname = http://localhost:80
 
 ### запрос на Retrieve C(R)UD
-GET {{hostname}}/cameras
+GET {{hostname}}/api/cameras
 
 ###
 
 ### запрос на Retrieve C(R)UD
-GET {{hostname}}/cameras/12
+GET {{hostname}}/api/cameras/14
 Content-Type: application/json
 
 ### запрос на Create (C)RUD
-POST {{hostname}}/cameras
+POST {{hostname}}/api/cameras
 Content-Type: application/json
 
 {
@@ -25,12 +26,12 @@ Content-Type: application/json
 #TODO запросы DELETE и PATCH
 
 ### запрос на Delete CRU(D)
-DELETE {{hostname}}/cameras/4
+DELETE {{hostname}}/api/cameras/4
 
 
 ### запрос на Update CR(U)D
 
-PUT {{hostname}}/cameras/4
+PUT {{hostname}}/api/cameras/100
 Content-Type: application/json
 
 {
@@ -44,7 +45,7 @@ Content-Type: application/json
 
 ###
 
-PATCH {{hostname}}/cameras/23
+PATCH {{hostname}}/api/cameras/23
 Content-Type: application/json
 
 {

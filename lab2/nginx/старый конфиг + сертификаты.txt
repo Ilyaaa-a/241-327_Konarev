@@ -1,0 +1,40 @@
+server {
+    listen 80;
+    server_name _;
+
+    include /etc/nginx/mime.types;
+    sendfile on;
+    charset     utf8;
+    autoindex   off;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+
+    location ~ ^/(admin|api)/?(.*)$ {
+        proxy_pass http://backend-service:8000;
+        proxy_set_header Host $host;
+    }
+
+    location /static {
+        alias /static;
+    }
+}
+
+
+создаём корневой CA
+Результат: root.key + root.crt
+openssl req -x509 -new -nodes -newkey rsa:2048 -keyout root.key -sha256 -days 3650 -out root.crt -subj "//CN=Root CA"
+
+создаём ключ и запрос на подпись (CSR) для сервера
+Результат: lab2.key + lab2.csr
+openssl req -new -nodes -newkey rsa:2048 -keyout lab2.key -out lab2.csr -subj "//CN=lab2 server cert"
+
+CA подписывает сертификат сервера
+echo "subjectAltName=DNS:localhost,IP:127.0.0.1" > san.txt
+openssl x509 -req -trustout -in lab2.csr -days 3650 -CA root.crt -CAkey root.key -CAcreateserial -out lab2.crt -sha256 -extfile san.txt
+
+root.key - секретный RSA-ключ нашего корневого центра сертификации. Это математическая основа всего. Никому не передаётся, хранится в секрете. В реальности у настоящих CA этот ключ хранится в физически защищённых хранилищах.
+root.crt - публичный сертификат нашего CA. Именно этот файл нужно установить в браузер/систему чтобы браузер начал доверять нашим сертификатам. Это как удостоверение личности нашего "центра сертификации".
+lab2.key - секретный RSA-ключ нашего сервера. Лежит на сервере (в nginx контейнере), наружу не передаётся никогда.
+lab2.csr - Certificate Signing Request, запрос на подпись сертификата. Временный файл - содержит публичный ключ сервера и информацию о нём. Мы передаём его нашему CA чтобы он подписал сертификат. После получения lab2.crt уже не нужен.
+lab2.crt - итоговый сертификат сервера. Nginx предъявляет его браузеру при каждом HTTPS соединении. Содержит публичный ключ сервера + подпись нашего CA.
+root.srl - служебный файл openssl

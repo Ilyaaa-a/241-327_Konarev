@@ -1,0 +1,56 @@
+services:
+
+  postgres-service:
+    image: postgres:16-alpine
+    env_file: .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # проверка что БД готова принимать запросы
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrate-service:
+    build: ./backend
+    env_file: .env # нужен чтобы подключиться к БД
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput"
+    volumes:
+      - static_files:/staticfiles
+    depends_on:
+      postgres-service:
+        # ждать пока postgres пройдёт healthcheck
+        condition: service_healthy
+
+  backend-service:
+    build: ./backend
+    env_file: .env
+    command: gunicorn lab1.wsgi:application --bind 0.0.0.0:8000 # слушать на всех интерфейсах внутри контейнера
+    volumes:
+      - static_files:/staticfiles
+    depends_on:
+      migrate-service:
+        # ждать пока миграции успешно завершатся
+        condition: service_completed_successfully
+
+  nginx-service:
+    build: ./nginx
+    ports:
+    # хост : контейнер
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static_files:/static
+    depends_on:
+      # запускаться после бэкенда
+      - backend-service
+
+volumes:
+  postgres_data: # данные БД 
+  static_files:
+
+# сгенерировать данные в бд
+# docker compose exec backend-service python manage.py shell -c "from mainapp.gentestdata import gentestdata; gentestdata()"
