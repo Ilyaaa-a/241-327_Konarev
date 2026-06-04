@@ -1,8 +1,15 @@
 services:
 
   postgres-service:
-    image: postgres:16-alpine
+    build: ./postgres
     env_file: .env
+    # включаю ssl, указываю путь к сертификату, приватному ключу и путь к конфигу
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/var/lib/postgresql/server.crt
+      -c ssl_key_file=/var/lib/postgresql/server.key
+      -c hba_file=/var/lib/postgresql/pg_hba.conf
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,6 +27,7 @@ services:
              python manage.py collectstatic --noinput"
     volumes:
       - static_files:/staticfiles
+      - ./postgres/certs/root.crt:/ssl_certs/root.crt:ro
     depends_on:
       postgres-service:
         # ждать пока postgres пройдёт healthcheck
@@ -31,10 +39,17 @@ services:
     command: gunicorn lab1.wsgi:application --bind 0.0.0.0:8000 # слушать на всех интерфейсах внутри контейнера
     volumes:
       - static_files:/staticfiles
+      - ./postgres/certs/root.crt:/ssl_certs/root.crt:ro
     depends_on:
       migrate-service:
         # ждать пока миграции успешно завершатся
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "health_check", "health-check", "--no-http"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   nginx-service:
     build: ./nginx
@@ -45,8 +60,9 @@ services:
     volumes:
       - static_files:/static
     depends_on:
-      # запускаться после бэкенда
-      - backend-service
+      backend-service:
+        # ждать пока backend пройдёт healthcheck
+        condition: service_healthy
 
 volumes:
   postgres_data: # данные БД 

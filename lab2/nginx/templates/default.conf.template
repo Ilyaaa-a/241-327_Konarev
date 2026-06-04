@@ -19,7 +19,7 @@ server {
 
     location = /favicon.ico { access_log off; log_not_found off; }
 
-    location ~ ^/(admin|api)/?(.*)$ {
+    location ~ ^/(admin|api|health)/?(.*)$ {
         proxy_pass http://backend-service:8000;
         proxy_set_header Host $host;
     }

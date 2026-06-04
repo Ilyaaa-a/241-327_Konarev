@@ -43,6 +43,8 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'mainapp', # приложение
+    
+    'health_check',
 ]
 
 MIDDLEWARE = [
@@ -102,6 +104,13 @@ DATABASES = {
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
         'HOST': 'postgres-service',
         'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        'OPTIONS': {
+            # подключается только по SSl и проверяет  сертификат
+            # 'sslmode': 'disable',
+            'sslmode': 'verify-ca',
+            # чтобы мог проверить сертификат
+            'sslrootcert': '/ssl_certs/root.crt',
+        },
     }
 }
 
